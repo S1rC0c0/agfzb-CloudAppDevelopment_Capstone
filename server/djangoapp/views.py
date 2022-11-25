@@ -3,7 +3,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, render, redirect
 from .models import CarDealer, CarMake, CarModel
-from .restapis import get_dealer_by_id, get_dealers_from_cf, get_dealers_by_state, get_dealer_reviews_from_cf, post_request
+from .restapis import get_dealer_by_id_from_cf, get_dealer_by_id, get_dealers_by_state, get_dealers_from_cf, get_dealer_reviews_from_cf, post_request
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from datetime import datetime
@@ -17,13 +17,9 @@ logger = logging.getLogger(__name__)
 # View to render the index page with a list of dealerships
 def get_dealerships(request):
     if request.method == "GET":
-        url = "https://us-east.functions.appdomain.cloud/api/v1/web/DevCloudNatApp_LabUseCLI/dealership-package/get-all-dealership"
-        # Get dealers from the URL
-        dealerships = get_dealers_from_cf(url)
-        # Concat all dealer's short name
-        dealer_names = ' '.join([dealer.short_name for dealer in dealerships])
-        # Return a list of dealer short name
-        return HttpResponse(dealer_names)
+        url = "https://us-east.functions.appdomain.cloud/api/v1/web/DevCloudNatApp_LabUseCLI/dealership-package/get-dealership"
+        context = {'dealership_list' : get_dealers_from_cf(url)}
+        return render(request, 'djangoapp/index.html', context)
 
 # View to render a static about page
 def about(request):
@@ -63,7 +59,7 @@ def logout_request(request):
     # Logout user in the request
     logout(request)
     # Redirect user back to course list view
-    return redirect('djangoapp:index')
+    return redirect('djangoapp/index')
 
 
 # View to handle sign up request
@@ -100,30 +96,32 @@ def registration_request(request):
 
 
 # View to render the reviews of a dealer
-def get_dealer_details(request, dealer_id):
-    context = {}
+def get_dealer_details(request, id):
     if request.method == "GET":
-        url = 'https://us-east.functions.appdomain.cloud/api/v1/web/DevCloudNatApp_LabUseCLI/dealership-package/get-reviews'
-        reviews = get_dealer_reviews_from_cf(url, dealer_id=dealer_id)
-        context = {
-            "reviews":  reviews, 
-            "dealer_id": dealer_id
-        }
-
+        context = {}
+        dealer_url = "https://us-east.functions.appdomain.cloud/api/v1/web/DevCloudNatApp_LabUseCLI/dealership-package/get-dealership"
+        dealer = get_dealer_by_id_from_cf(dealer_url, id=id)
+        context["dealer"] = dealer
+    
+        review_url = "https://us-east.functions.appdomain.cloud/api/v1/web/DevCloudNatApp_LabUseCLI/dealership-package/get-reviews"
+        reviews = get_dealer_reviews_from_cf(review_url, id=id)
+        print(reviews)
+        context["reviews"] = reviews
+        
         return render(request, 'djangoapp/dealer_details.html', context)
 
 
 # View to submit a new review
-def add_review(request, dealer_id):
+def add_review(request, id):
     # User must be logged in before posting a review
     if request.user.is_authenticated:
         # GET request renders the page with the form for filling out a review
         if request.method == "GET":
-            url = f"https://us-east.functions.appdomain.cloud/api/v1/web/DevCloudNatApp_LabUseCLI/dealership-package/get-all-dealership?dealerId={dealer_id}"
+            url = f"https://us-east.functions.appdomain.cloud/api/v1/web/DevCloudNatApp_LabUseCLI/dealership-package/get-dealership?Id={id}"
             # Get dealer details from the API
             context = {
                 "cars": CarModel.objects.all(),
-                "dealer": get_dealer_by_id(url, dealer_id=dealer_id),
+                "dealer": get_dealer_by_id_from_cf(url, id=id),
             }
             return render(request, 'djangoapp/add_review.html', context)
 
@@ -148,7 +146,7 @@ def add_review(request, dealer_id):
             else: 
                 review["purchase_date"] = None
 
-            url = "https://us-east.functions.appdomain.cloud/api/v1/web/DevCloudNatApp_LabUseCLI/dealership-package/post-review"  # API Cloud Function route
+            url = "https://us-east.functions.cloud.ibm.com/api/v1/namespaces/DevCloudNatApp_LabUseCLI/actions/dealership-package/post-review"  # API Cloud Function route
             json_payload = {"review": review}  # Create a JSON payload that contains the review data
 
             # Performing a POST request with the review

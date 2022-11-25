@@ -3,11 +3,44 @@
 <head style="text-align:center; font-family:verdana;">
     <title>Contact Us</title>
 </head>
-<body style="text-align:left; font-famuly:courier;">
-    <h1 style="size:50px;" >Contact Us</h1>
-    
-    <p>Adress : 0000 Unexisting Road, 99999 Hellcity</p>
-    <p>telephone number : 666-666-6666</p>
-   
+<body>
+    <nav class="navbar navbar-light bg-light">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="{% url 'djangoapp:index' %}">Home</a>
+                <a class="navbar-brand" href="{% url 'djangoapp:about-view' %}">About Us</a>
+                <a class="navbar-brand" href="{% url 'djangoapp:contact-view' %}">Contact Us</a>
+            </div>
+            <ul class="nav navbar-nav navbar-right"></ul>
+            {% if user.is_authenticated %}
+            <span>
+                <a class="btn btn-link">({{ user.username }})</a>
+                <a class="btn btn-link" href="{% url 'djangoapp:logout' %}">Logout</a>
+            </span>
+            {% else %}
+            <div class="navbar-header">
+                <form class="form-inline" action="{% url 'djangoapp:login' %}" method="post">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Username" name="username">
+                        <input type="password" class="form-control" placeholder="Password" name="psw">
+                        <button class="btn btn-primary" type="submit">Login</button>
+                        <a class="btn btn-link" href="{% url 'djangoapp:registration' %}">Sign Up</a>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+    <div class="card bg-light mb-3" style="max-width: 18rem;">
+        <div class="card-header">Contact</div>
+        <div class="card-body">
+            <h5 class="card-title">Best Cars dealership</h5>
+            <p class="card-text">Brandunburger Straße 112<br>
+                12332, Berlin</p>
+            <i class="fa fa-phone"></i>
+            <a href="tel:01528931424">01528931424</a>
+        </div>
+    </div>
 </body>  
 </html>
