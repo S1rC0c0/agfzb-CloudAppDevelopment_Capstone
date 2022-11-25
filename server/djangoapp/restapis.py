@@ -52,7 +52,8 @@ def get_dealers_from_cf(url, **kwargs):
     results = []
     json_result = get_request(url)
     # Retrieve the dealer data from the response
-    dealers = json_result["rows"]
+    print("line 55 RA", json_result)
+    dealers = json_result
     # For each dealer in the response
     for dealer in dealers:
         # Get its data in `doc` object
@@ -65,7 +66,6 @@ def get_dealers_from_cf(url, **kwargs):
         results.append(dealer_obj)
 
     return results
-
 
 # Gets a single dealer from the Cloudant DB with the Cloud Function get-dealerships
 # Requires the dealer_id parameter with only a single value
